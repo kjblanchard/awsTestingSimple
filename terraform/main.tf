@@ -15,10 +15,12 @@ data "aws_ami" "ubuntu" {
 }
 
 resource "aws_instance" "web" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = "t3.micro"
-  key_name      = aws_key_pair.ec2.key_name
-  subnet_id     = var.private_subnet
+  ami                  = data.aws_ami.ubuntu.id
+  instance_type        = "t3.micro"
+  key_name             = aws_key_pair.ec2.key_name
+  subnet_id            = local.private_subnet_ids[0]
+  # subnet_id            = local.public_subnet_ids[0]
+  iam_instance_profile = aws_iam_instance_profile.dev-resources-iam-profile.name
   user_data = templatefile("./userdata.sh", {
     path    = var.path
     git_url = var.git_url
@@ -41,20 +43,28 @@ resource "aws_key_pair" "ec2" {
 }
 
 resource "aws_security_group" "example" {
-  vpc_id = var.vpc
-  ingress {
-    from_port        = 80
-    to_port          = 80
-    protocol         = "TCP"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
-  }
+  vpc_id = local.vpc_id
+
+  # ingress {
+  #   from_port   = 22
+  #   to_port     = 22
+  #   protocol    = "TCP"
+  #   cidr_blocks = ["${chomp(data.http.myip.response_body)}/32"]
+  # }
+  # ingress {
+  #   from_port   = 8095
+  #   to_port     = 8095
+  #   protocol    = "UDP"
+  #   cidr_blocks = ["${chomp(data.http.myip.response_body)}/32"]
+  # }
 
   ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "TCP"
-    cidr_blocks = ["${chomp(data.http.myip.response_body)}/32"]
+    from_port   = 8095
+    to_port     = 8095
+    protocol    = "UDP"
+    security_groups = [ aws_security_group.lb.id]
+    # self = true
+    # cidr_blocks = ["${chomp(data.http.myip.response_body)}/32"]
   }
 
   egress {

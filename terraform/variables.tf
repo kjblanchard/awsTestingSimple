@@ -8,15 +8,6 @@ variable "path" {
 
 }
 
-variable "vpc" {
-
-}
-variable "public_subnets" {
-
-}
-variable "private_subnet" {
-
-}
 variable "zone_id" {
 
 }
